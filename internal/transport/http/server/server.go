@@ -14,13 +14,12 @@ import (
 type Server struct {
 	server *http.Server
 	router *chi.Mux
-	cfg    config.Config
+	cfg    *config.Config
 }
 
-func New(cfg config.Config, handlers *handlers.Handler) *Server {
+func New(cfg *config.Config, handlers *handlers.Handler) *Server {
 	rtr := router.New(handlers).Setup()
 
-	// Настраиваем HTTP сервер
 	srv := &http.Server{
 		Addr:         cfg.Server.PortStr(),
 		Handler:      rtr,
