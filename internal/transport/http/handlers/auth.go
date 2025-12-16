@@ -26,15 +26,15 @@ failed:
 	-response body: JSON with error message + timestamp
 */
 func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
-	const pp = "internal/transport/http/handlers/auth.go/SignUp"
+	const op = "handlers/auth.go/SignUp"
 
 	var req dto.SignUpRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
 		slog.Warn("Failed to decode JSON",
-			"Path", pp,
-			"Error", err,
+			slog.String("op", op),
+			slog.String("error", err.Error()),
 		)
 		return
 	}
@@ -42,18 +42,12 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	if err := h.validator.Struct(req); err != nil {
 		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
-			"Path", pp,
-			"error", err,
+			slog.String("op", op),
+			slog.String("error", err.Error()),
 		)
 		return
 	}
 
-	slog.Debug("Data transfered to service layer",
-		"Path", pp,
-		"Nickname", req.Nickname,
-		"Email", req.Email,
-		"PasswordLength", len(req.Password),
-	)
 	user, err := h.authService.SignUp(
 		ctx,
 		req.Nickname,
@@ -64,26 +58,29 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, apperrors.ErrUserExist) {
 			WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrUserExist))
 			slog.Debug("User with this nickname already exist",
-				"Path", pp,
-				"Username", req.Nickname,
-				"Error", err,
+				slog.String("op", op),
+				slog.String("nickname", req.Nickname),
+				slog.String("error", err.Error()),
 			)
 			return
 		}
+
 		if errors.Is(err, apperrors.ErrEmailExist) {
 			WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrEmailExist))
 			slog.Debug("User with this email already exist",
-				"Path", pp,
-				"Email", req.Email,
-				"Error", err,
+				slog.String("op", op),
+				slog.String("email", req.Email),
+				slog.String("error", err.Error()),
 			)
 			return
 		}
+
 		WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(ErrServer))
-		slog.Debug("Server error",
-			"Path", pp,
-			"Email", req.Email,
-			"Error", err,
+		slog.Debug("Intenal server error",
+			slog.String("op", op),
+			slog.String("email", req.Email),
+			slog.String("nickname", req.Nickname),
+			slog.String("error", err.Error()),
 		)
 		return
 	}
@@ -107,7 +104,7 @@ failed:
 	-response body: JSON with error message + timestamp
 */
 func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
-	const pp = "internal/transport/http/handlers/user.go/SignIn"
+	const op = "handlers/user.go/SignIn"
 
 	var req dto.SignInRequest
 	ctx := r.Context()
@@ -115,8 +112,8 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
 		slog.Warn("Failed to decode JSON",
-			"Path", pp,
-			"Error", err,
+			slog.String("op", op),
+			slog.String("error", err.Error()),
 		)
 		return
 	}
@@ -124,17 +121,12 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err := h.validator.Struct(req); err != nil {
 		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
-			"Path", pp,
-			"error", err,
+			slog.String("op", op),
+			slog.String("error", err.Error()),
 		)
 		return
 	}
 
-	slog.Debug("Data transfered to service layer",
-		"Path", pp,
-		"Email", req.Email,
-		"PasswordLength", len(req.Password),
-	)
 	token, err := h.authService.SignIn(
 		ctx,
 		req.Email,
@@ -143,18 +135,19 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, apperrors.ErrInvalidCredentials) {
 			WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrInvalidCredentials))
-			slog.Debug("Failed to authorize",
-				"Path", pp,
-				"Email", req.Email,
-				"error", err,
+			slog.Debug("Authentication failed",
+				slog.String("op", op),
+				slog.String("email", req.Email),
+				slog.String("error", err.Error()),
 			)
 			return
 		}
+
 		WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(ErrServer))
-		slog.Debug("Server error",
-			"Path", pp,
-			"email", req.Email,
-			"error", err,
+		slog.Debug("Intenal server error",
+			slog.String("op", op),
+			slog.String("email", req.Email),
+			slog.String("error", err.Error()),
 		)
 		return
 	}

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -33,17 +35,19 @@ func NewAuthService(repository *postgres.Repository, secretKey string, jwtExpiry
 }
 
 func (s AuthService) SignUp(ctx context.Context, nickname, email, password string) (*models.User, error) {
-	const pp = "internal/service/auth.go/SignUp"
+	const op = "service/auth.go/SignUp"
 
-	slog.Info("Start creating User",
-		"Path", pp,
+	slog.Debug("Start user registration",
+		slog.String("op", op),
+		slog.String("email", email),
 	)
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		slog.Error("Failed to hash password",
-			"Path", pp,
-			"Error", err,
+		slog.Error("Registration failed: password hashing failed",
+			slog.String("op", op),
+			slog.String("email", email),
+			slog.String("error", err.Error()),
 		)
 		return nil, err
 	}
@@ -56,52 +60,76 @@ func (s AuthService) SignUp(ctx context.Context, nickname, email, password strin
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
-	slog.Debug("User data transfered to db",
-		"Path", pp,
-		"Nickname", userDB.Nickname,
-		"Email", userDB.Email,
-	)
+
 	user, err := s.authRepository.CreateUser(ctx, userDB)
 	if err != nil {
-		slog.Error("Failed to create user",
-			"Path", pp,
-			"Error", err,
+		if errors.Is(err, apperrors.ErrEmailExist) {
+			slog.Info("Registration rejected: email already registered",
+				slog.String("op", op),
+				slog.String("email", email),
+				slog.String("reason", "duplicate_email"),
+			)
+			return nil, apperrors.ErrEmailExist
+		}
+		if errors.Is(err, apperrors.ErrUserExist) {
+			slog.Info("Registration rejected: nickname already taken",
+				slog.String("op", op),
+				slog.String("nickname", nickname),
+				slog.String("reason", "duplicate_nickname"),
+			)
+			return nil, apperrors.ErrUserExist
+		}
+
+		slog.Error("Database error during registration",
+			slog.String("op", op),
+			slog.String("email", email),
+			slog.String("error", err.Error()),
 		)
-		return nil, err
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	slog.Info("User successfully created",
-		"Path", pp,
-		"UUID", user.ID,
-		"Nickname", user.Nickname,
-		"Email", user.Email,
+	slog.Info("Registration successful",
+		slog.String("op", op),
+		slog.String("user_id", user.ID),
+		slog.String("email", email),
+		slog.String("nickname", user.Nickname),
 	)
+
 	return user, nil
 }
 
 func (s AuthService) SignIn(ctx context.Context, email, password string) (string, error) {
-	const pp = "internal/service/auth.go/SignIn"
+	const op = "service/auth.go/SignIn"
 
-	slog.Info("Start user auth",
-		"Path", pp,
+	slog.Debug("Starting authentication",
+		slog.String("op", op),
+		slog.String("email", email),
 	)
 
 	user, err := s.authRepository.FindByEmail(ctx, email)
 	if err != nil {
-		slog.Warn("Failed to find email",
-			"Path", pp,
-			"Email", email,
-			"Error", err,
+		slog.Error("Database error during authentication",
+			slog.String("op", op),
+			slog.String("email", email),
+			slog.String("error", err.Error()),
+		)
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	if user == nil {
+		slog.Info("Authentication failed: email not registered",
+			slog.String("op", op),
+			slog.String("email", email),
 		)
 		return "", apperrors.ErrInvalidCredentials
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		slog.Warn("Failed to auth user",
-			"Path", pp,
-			"Email", email,
-			"Error", err,
+		slog.Info("Authentication failed: invalid password",
+			slog.String("op", op),
+			slog.String("email", email),
+			slog.String("user_id", user.ID),
 		)
 		return "", apperrors.ErrInvalidCredentials
 	}
@@ -109,17 +137,20 @@ func (s AuthService) SignIn(ctx context.Context, email, password string) (string
 	jwt, err := s.GenerateJWT(user)
 	if err != nil {
 		slog.Error("Failed to generate JWT",
-			"Path", pp,
-			"Error", err,
+			slog.String("op", op),
+			slog.String("user_id", user.ID),
+			slog.String("error", err.Error()),
 		)
 		return "", err
 	}
 
-	slog.Info("JWt for user successfully created",
-		"Path", pp,
-		"Nickname", user.Nickname,
-		"Email", user.Email,
+	slog.Info("Authentication successful",
+		slog.String("op", op),
+		slog.String("user_id", user.ID),
+		slog.String("email", email),
+		slog.String("nickname", user.Nickname),
 	)
+
 	return jwt, nil
 }
 
@@ -131,7 +162,7 @@ type Claims struct {
 }
 
 func (s AuthService) GenerateJWT(user *models.User) (string, error) {
-	const pp = "internal/service/auth.go/GenerateJWT"
+	const op = "service/auth.go/GenerateJWT"
 
 	claims := Claims{
 		ID:       user.ID,
@@ -148,10 +179,12 @@ func (s AuthService) GenerateJWT(user *models.User) (string, error) {
 
 	jwtStr, err := jwtToken.SignedString([]byte(s.secretKey))
 	if err != nil {
-		slog.Error("Failed to sign token",
-			"Path", pp,
-			"Error", err,
+		slog.Error("Failed to sign JWT token",
+			slog.String("op", op),
+			slog.String("user_id", user.ID),
+			slog.String("error", err.Error()),
 		)
+		return "", err
 	}
 
 	return jwtStr, nil

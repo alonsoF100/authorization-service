@@ -8,7 +8,6 @@ import (
 )
 
 type AuthService interface {
-	// TODO add methods
 	SignUp(ctx context.Context, nickname, email, password string) (*models.User, error)
 	SignIn(ctx context.Context, email, password string) (string, error)
 }

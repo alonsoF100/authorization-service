@@ -8,11 +8,12 @@ import (
 
 	"github.com/alonsoF100/authorization-service/internal/apperrors"
 	"github.com/alonsoF100/authorization-service/internal/models"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (r Repository) CreateUser(ctx context.Context, userDB *models.User) (*models.User, error) {
-	const pp = "internal/repository/postgres/auth.go/CreateUser"
+	const op = "repository/postgres/auth.go/CreateUser"
 
 	const query = `
 	INSERT INTO users (id, nickname, email, password, created_at, updated_at) 
@@ -21,14 +22,14 @@ func (r Repository) CreateUser(ctx context.Context, userDB *models.User) (*model
 	`
 
 	slog.Debug("Query data",
-		"Path", pp,
-		"QueryRow", query,
-		"ID", userDB.ID,
-		"Nickname", userDB.Nickname,
-		"Email", userDB.Email,
-		"PasswordLength", len(userDB.PasswordHash),
-		"CreatedAt", userDB.CreatedAt,
-		"UpdatedAt", userDB.UpdatedAt,
+		slog.String("op", op),
+		slog.String("query_row", query),
+		slog.String("id", userDB.ID),
+		slog.String("nickname", userDB.Nickname),
+		slog.String("email", userDB.Email),
+		slog.Int("password_length", len(userDB.PasswordHash)),
+		slog.Time("created_at", userDB.CreatedAt),
+		slog.Time("updated_at", userDB.UpdatedAt),
 	)
 	var user models.User
 	err := r.pool.QueryRow(
@@ -51,43 +52,43 @@ func (r Repository) CreateUser(ctx context.Context, userDB *models.User) (*model
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			switch pgErr.ConstraintName {
 			case "unique_email":
-				slog.Warn("Email already exists",
-					"Path", pp,
-					"Email", userDB.Email,
-					"Constraint", pgErr.ConstraintName,
+				slog.Debug("Email already exists",
+					slog.String("op", op),
+					slog.String("email", userDB.Email),
+					slog.String("constraint", pgErr.ConstraintName),
 				)
 				return nil, apperrors.ErrEmailExist
 
 			case "unique_nickname":
-				slog.Warn("Nickname already exists",
-					"Path", pp,
-					"Nickname", userDB.Nickname,
-					"Constraint", pgErr.ConstraintName,
+				slog.Debug("Nickname already exists",
+					slog.String("op", op),
+					slog.String("nickname", userDB.Nickname),
+					slog.String("constraint", pgErr.ConstraintName),
 				)
 				return nil, apperrors.ErrUserExist
 			}
 		}
 
 		slog.Error("Failed to create user",
-			"Path", pp,
-			"Error", err,
-			"ErrorType", fmt.Sprintf("%T", err),
+			slog.String("op", op),
+			slog.String("error", err.Error()),
 		)
-		return nil, fmt.Errorf("failed to create user: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	slog.Info("User created succsessfully",
-		"Path", pp,
-		"Nickname", user.Nickname,
-		"Email", user.Email,
-		"ID", user.ID,
-		"CreatedAt", user.CreatedAt,
+	slog.Debug("User created succsessfully",
+		slog.String("op", op),
+		slog.String("nickname", user.Nickname),
+		slog.String("email", user.Email),
+		slog.String("id", user.ID),
+		slog.Time("created_at", user.CreatedAt),
 	)
+
 	return &user, nil
 }
 
 func (r Repository) FindByEmail(ctx context.Context, email string) (*models.User, error) {
-	const pp = "internal/repository/postgres/auth.go/FindByEmail"
+	const op = "repository/postgres/auth.go/FindByEmail"
 
 	const query = `
 	SELECT id, email, nickname, password FROM users 
@@ -95,9 +96,9 @@ func (r Repository) FindByEmail(ctx context.Context, email string) (*models.User
 	`
 
 	slog.Debug("Query data",
-		"Path", pp,
-		"QueryRow", query,
-		"Email", email,
+		slog.String("op", op),
+		slog.String("query_row", query),
+		slog.String("email", email),
 	)
 	var user models.User
 	err := r.pool.QueryRow(
@@ -111,19 +112,28 @@ func (r Repository) FindByEmail(ctx context.Context, email string) (*models.User
 		&user.PasswordHash,
 	)
 	if err != nil {
-		slog.Error("Failed to find user",
-			"Path", pp,
-			"Error", err,
-			"ErrorType", fmt.Sprintf("%T", err),
+		if errors.Is(err, pgx.ErrNoRows) {
+			slog.Debug("User not found by email",
+				slog.String("op", op),
+				slog.String("email", email),
+			)
+			return nil, nil
+		}
+
+		slog.Error("Database error",
+			slog.String("op", op),
+			slog.String("email", email),
+			slog.String("error", err.Error()),
 		)
-		return nil, fmt.Errorf("failed to find user: %w", err)
+		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	slog.Info("User was succsessfully founded",
-		"Path", pp,
-		"Nickname", user.Nickname,
-		"Email", user.Email,
-		"ID", user.ID,
+	slog.Debug("User was succsessfully founded",
+		slog.String("op", op),
+		slog.String("nickname", user.Nickname),
+		slog.String("email", user.Email),
+		slog.String("id", user.ID),
 	)
+
 	return &user, nil
 }
