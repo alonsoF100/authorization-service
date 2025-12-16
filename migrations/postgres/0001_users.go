@@ -19,7 +19,7 @@ func upCreateUsers(ctx context.Context, tx *sql.Tx) error {
 			email VARCHAR(255) NOT NULL,
 			password VARCHAR(512) NOT NULL,
 			created_at TIMESTAMP NOT NULL,
-			updated_at TIMESTAMPNOT NULL
+			updated_at TIMESTAMP NOT NULL
 		);
 
 		ALTER TABLE users 
