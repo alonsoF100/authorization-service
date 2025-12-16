@@ -3,6 +3,7 @@ module github.com/alonsoF100/authorization-service
 go 1.25.5
 
 require (
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-playground/validator/v10 v10.29.0
 	github.com/joho/godotenv v1.5.1
 	github.com/spf13/viper v1.21.0

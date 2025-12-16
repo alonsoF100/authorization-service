@@ -7,7 +7,7 @@ import (
 	"github.com/alonsoF100/authorization-service/internal/config"
 )
 
-func Setup(cfg *config.Config) *slog.Logger {
+func Setup(cfg config.Config) *slog.Logger {
 	var handler slog.Handler
 
 	switch cfg.Logger.JSON {
