@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/alonsoF100/authorization-service/internal/apperrors"
+	"github.com/alonsoF100/authorization-service/internal/config"
 	"github.com/alonsoF100/authorization-service/internal/models"
 	"github.com/alonsoF100/authorization-service/internal/repository/postgres"
 	"github.com/golang-jwt/jwt/v5"
@@ -23,14 +24,13 @@ type AuthRepository interface {
 type AuthService struct {
 	authRepository AuthRepository
 	secretKey      string
-	jwtExpiry      time.Duration
+	cfg            *config.Config
 }
 
-func NewAuthService(repository *postgres.Repository, secretKey string, jwtExpiry time.Duration) *AuthService {
+func NewAuthService(repository *postgres.Repository, cfg *config.Config) *AuthService {
 	return &AuthService{
 		authRepository: repository,
-		secretKey:      secretKey,
-		jwtExpiry:      jwtExpiry,
+		cfg:            cfg,
 	}
 }
 
@@ -169,7 +169,7 @@ func (s AuthService) GenerateJWT(user *models.User) (string, error) {
 		Email:    user.Email,
 		Nickname: user.Nickname,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.jwtExpiry)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.cfg.JWT.Expiry)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   user.ID,
 		},
@@ -177,7 +177,7 @@ func (s AuthService) GenerateJWT(user *models.User) (string, error) {
 
 	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	jwtStr, err := jwtToken.SignedString([]byte(s.secretKey))
+	jwtStr, err := jwtToken.SignedString([]byte(s.cfg.JWT.SecretKey))
 	if err != nil {
 		slog.Error("Failed to sign JWT token",
 			slog.String("op", op),

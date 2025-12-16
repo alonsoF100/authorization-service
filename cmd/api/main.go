@@ -29,8 +29,7 @@ func main() {
 	dataBase := postgres.New(pool)
 	authService := service.NewAuthService(
 		dataBase,
-		cfg.JWT.SecretKey,
-		cfg.JWT.Expiry,
+		cfg,
 	)
 	handlers := handlers.New(authService)
 
