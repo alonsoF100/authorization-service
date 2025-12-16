@@ -7,19 +7,20 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type UserService interface {
+type AuthService interface {
 	// TODO add methods
-	CreateUser(ctx context.Context, nickname, email, password string) (*models.User, error)
+	SignUp(ctx context.Context, nickname, email, password string) (*models.User, error)
+	SignIn(ctx context.Context, email, password string) (string, error)
 }
 
 type Handler struct {
-	userService UserService
+	authService AuthService
 	validator   *validator.Validate
 }
 
-func New(userService UserService) *Handler {
+func New(authService AuthService) *Handler {
 	return &Handler{
-		userService: userService,
+		authService: authService,
 		validator:   validator.New(),
 	}
 }

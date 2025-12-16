@@ -27,7 +27,7 @@ failed:
 */
 func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	const pp = "internal/transport/http/handlers/auth.go/SignUp"
-	
+
 	var req dto.SignUpRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -53,7 +53,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		"email", req.Email,
 		"passwordLength", len(req.Password),
 	)
-	user, err := h.userService.CreateUser(
+	user, err := h.authService.SignUp(
 		ctx,
 		req.Nickname,
 		req.Email,
@@ -104,4 +104,53 @@ failed:
 */
 func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	const pp = "internal/transport/http/handlers/user.go/SignIn"
+
+	var req dto.SignInRequest
+	ctx := r.Context()
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
+		slog.Warn("Failed to decode JSON",
+			"path", pp,
+			"error", err,
+		)
+		return
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToValidate))
+		slog.Warn("Failed to validate request",
+			"path", pp,
+			"error", err,
+		)
+		return
+	}
+
+	slog.Debug("Data transfered to service layer",
+		"email", req.Email,
+		"passwordLength", len(req.Password),
+	)
+	token, err := h.authService.SignIn(
+		ctx,
+		req.Email,
+		req.Password,
+	)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
+			WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrInvalidCredentials))
+			slog.Debug("Failed to authorize",
+				"email", req.Email,
+				"error", err,
+			)
+			return
+		}
+		WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(ErrServer))
+		slog.Debug("Server error",
+			"email", req.Email,
+			"error", err,
+		)
+		return
+	}
+
+	WriteJSON(w, http.StatusOK, dto.NewSignInResponse(token))
 }

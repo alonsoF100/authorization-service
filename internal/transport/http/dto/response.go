@@ -33,3 +33,15 @@ func NewSignUpResponse(user *models.User) SignUpResponse {
 		CreatedAt: user.CreatedAt,
 	}
 }
+
+type SignInResponse struct {
+	JWT  string `json:"jwt"`
+	Type string `json:"token_type"`
+}
+
+func NewSignInResponse(token string) SignInResponse {
+	return SignInResponse{
+		JWT:  token,
+		Type: "Bearer",
+	}
+}
