@@ -26,6 +26,7 @@ func Load() *Config {
 
 	config.Database.User = os.Getenv("DB_USER")
 	config.Database.Password = os.Getenv("DB_PASSWORD")
+	config.JWT.SecretKey = os.Getenv("SECRET_KEY")
 
 	log.Println("Config loaded successfully")
 	return &config

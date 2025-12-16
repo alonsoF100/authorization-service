@@ -18,3 +18,7 @@ logger:
 
 migrations:
   dir: "migrations/postgres"
+
+jwt:
+  expiry: "24h"
+  secret_key: ""

@@ -7,6 +7,7 @@ type Config struct {
 	Database  DatabaseConfig   `mapstructure:"database"`
 	Logger    LoggerConfig     `mapstructure:"logger"`
 	Migration MigrationsConfig `mapstructure:"migrations"`
+	JWT       JWTConfig        `mapstructure:"jwt"`
 }
 
 type DatabaseConfig struct {
@@ -32,4 +33,9 @@ type LoggerConfig struct {
 
 type MigrationsConfig struct {
 	Dir string `mapstructure:"dir"`
+}
+
+type JWTConfig struct {
+	SecretKey string        `mapstructure:"secret_key"`
+	Expiry    time.Duration `mapstructure:"expiry"`
 }

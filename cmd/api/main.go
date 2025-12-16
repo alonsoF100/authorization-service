@@ -26,7 +26,11 @@ func main() {
 	slog.Info("Pool created successfully")
 
 	dataBase := postgres.New(pool)
-	authService := service.NewAuthService(dataBase)
+	authService := service.NewAuthService(
+		dataBase,
+		config.Load().JWT.SecretKey,
+		config.Load().JWT.Expiry,
+	)
 	handlers := handlers.New(authService)
 
 	if err := server.New(cfg, handlers).Start(); err != nil {
