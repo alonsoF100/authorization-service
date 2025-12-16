@@ -10,6 +10,7 @@ import (
 	"github.com/alonsoF100/authorization-service/internal/service"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/handlers"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/server"
+	_ "github.com/alonsoF100/authorization-service/migrations/postgres"
 )
 
 func main() {
@@ -28,8 +29,8 @@ func main() {
 	dataBase := postgres.New(pool)
 	authService := service.NewAuthService(
 		dataBase,
-		config.Load().JWT.SecretKey,
-		config.Load().JWT.Expiry,
+		cfg.JWT.SecretKey,
+		cfg.JWT.Expiry,
 	)
 	handlers := handlers.New(authService)
 

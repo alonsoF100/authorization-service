@@ -10,7 +10,7 @@ func (cfg *DatabaseConfig) ConStr() string {
 		cfg.Host,
 		cfg.Port,
 		cfg.Name,
-		cfg.SSlMode,
+		cfg.SSLMode,
 	)
 }
 

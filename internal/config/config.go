@@ -16,7 +16,7 @@ type DatabaseConfig struct {
 	User     string `mapstructure:"user"`
 	Password string `mapstructure:"password"`
 	Name     string `mapstructure:"name"`
-	SSlMode  string `mapstructure:"ssl_mode"`
+	SSLMode  string `mapstructure:"ssl_mode"`
 }
 
 type ServerConfig struct {
