@@ -27,11 +27,17 @@ func main() {
 	slog.Info("Pool created successfully")
 
 	dataBase := postgres.New(pool)
+
 	authService := service.NewAuthService(
 		dataBase,
 		cfg,
 	)
-	handlers := handlers.New(authService)
+
+	//userService = // TODO add userService setup for handlers/user.go :)
+	handlers := handlers.New(
+		authService,
+		nil,
+	)
 
 	if err := server.New(cfg, handlers).Start(); err != nil {
 		slog.Error("Failed to start server",

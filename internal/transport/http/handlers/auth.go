@@ -8,6 +8,7 @@ import (
 
 	"github.com/alonsoF100/authorization-service/internal/apperrors"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/dto"
+	"github.com/alonsoF100/authorization-service/internal/transport/http/help"
 )
 
 /*
@@ -31,7 +32,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	var req dto.SignUpRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
+		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToDecode))
 		slog.Warn("Failed to decode JSON",
 			slog.String("op", op),
 			slog.String("error", err.Error()),
@@ -40,7 +41,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.validator.Struct(req); err != nil {
-		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToValidate))
+		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
 			slog.String("op", op),
 			slog.String("error", err.Error()),
@@ -48,7 +49,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.SignUp(
+	user, err := h.AuthService.SignUp(
 		ctx,
 		req.Nickname,
 		req.Email,
@@ -56,7 +57,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrUserExist) {
-			WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrUserExist))
+			help.WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrUserExist))
 			slog.Debug("User with this nickname already exist",
 				slog.String("op", op),
 				slog.String("nickname", req.Nickname),
@@ -66,7 +67,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if errors.Is(err, apperrors.ErrEmailExist) {
-			WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrEmailExist))
+			help.WriteJSON(w, http.StatusConflict, dto.NewErrorResponse(apperrors.ErrEmailExist))
 			slog.Debug("User with this email already exist",
 				slog.String("op", op),
 				slog.String("email", req.Email),
@@ -75,7 +76,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(ErrServer))
+		help.WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(apperrors.ErrServer))
 		slog.Debug("Intenal server error",
 			slog.String("op", op),
 			slog.String("email", req.Email),
@@ -85,7 +86,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJSON(w, http.StatusCreated, dto.NewSignUpResponse(user))
+	help.WriteJSON(w, http.StatusCreated, dto.NewSignUpResponse(user))
 }
 
 /*
@@ -110,7 +111,7 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
+		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToDecode))
 		slog.Warn("Failed to decode JSON",
 			slog.String("op", op),
 			slog.String("error", err.Error()),
@@ -119,7 +120,7 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.validator.Struct(req); err != nil {
-		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToValidate))
+		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
 			slog.String("op", op),
 			slog.String("error", err.Error()),
@@ -127,14 +128,14 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := h.authService.SignIn(
+	token, err := h.AuthService.SignIn(
 		ctx,
 		req.Email,
 		req.Password,
 	)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrInvalidCredentials) {
-			WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrInvalidCredentials))
+			help.WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrInvalidCredentials))
 			slog.Debug("Authentication failed",
 				slog.String("op", op),
 				slog.String("email", req.Email),
@@ -143,7 +144,7 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(ErrServer))
+		help.WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(apperrors.ErrServer))
 		slog.Debug("Intenal server error",
 			slog.String("op", op),
 			slog.String("email", req.Email),
@@ -152,5 +153,5 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJSON(w, http.StatusOK, dto.NewSignInResponse(token))
+	help.WriteJSON(w, http.StatusOK, dto.NewSignInResponse(token))
 }

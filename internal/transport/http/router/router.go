@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/alonsoF100/authorization-service/internal/transport/http/handlers"
+	"github.com/alonsoF100/authorization-service/internal/transport/http/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -18,9 +19,17 @@ func New(handlers *handlers.Handler) *Router {
 func (rt Router) Setup() *chi.Mux {
 	r := chi.NewRouter()
 
+	// Public routes
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", rt.handlers.SignUp)
 		r.Post("/login", rt.handlers.SignIn)
+	})
+
+	// Protected routes
+	r.Route("/api", func(r chi.Router) {
+		r.Use(middleware.Auth(rt.handlers.AuthService))
+
+		r.Get("/me", rt.handlers.GetMe)
 	})
 
 	return r

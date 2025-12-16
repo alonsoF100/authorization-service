@@ -10,16 +10,23 @@ import (
 type AuthService interface {
 	SignUp(ctx context.Context, nickname, email, password string) (*models.User, error)
 	SignIn(ctx context.Context, email, password string) (string, error)
+	ValidateJWT(ctx context.Context, tokenString string) (*models.Claims, error)
+}
+
+type UserService interface {
+	// TODO add userService methods signature
 }
 
 type Handler struct {
-	authService AuthService
+	AuthService AuthService
+	UserService UserService
 	validator   *validator.Validate
 }
 
-func New(authService AuthService) *Handler {
+func New(authService AuthService, userService UserService) *Handler {
 	return &Handler{
-		authService: authService,
+		AuthService: authService,
+		UserService: userService,
 		validator:   validator.New(),
 	}
 }

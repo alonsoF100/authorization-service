@@ -154,17 +154,10 @@ func (s AuthService) SignIn(ctx context.Context, email, password string) (string
 	return jwt, nil
 }
 
-type Claims struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Nickname string `json:"nickname"`
-	jwt.RegisteredClaims
-}
-
 func (s AuthService) GenerateJWT(user *models.User) (string, error) {
 	const op = "service/auth.go/GenerateJWT"
 
-	claims := Claims{
+	claims := models.Claims{
 		ID:       user.ID,
 		Email:    user.Email,
 		Nickname: user.Nickname,
@@ -188,4 +181,45 @@ func (s AuthService) GenerateJWT(user *models.User) (string, error) {
 	}
 
 	return jwtStr, nil
+}
+
+func (s AuthService) ValidateJWT(ctx context.Context, tokenString string) (*models.Claims, error) {
+	const op = "service/auth.go/ValidateToken"
+
+	var claims models.Claims
+	token, err := jwt.ParseWithClaims(tokenString, &claims, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			slog.Debug("Invalid signing method",
+				slog.String("op", op),
+				slog.String("method", t.Method.Alg()),
+			)
+			return nil, apperrors.ErrInvalidToken
+		}
+		return []byte(s.cfg.JWT.SecretKey), nil
+	})
+	if err != nil {
+		slog.Debug("Token validation failed",
+			slog.String("op", op),
+			slog.String("error", err.Error()),
+		)
+		return nil, apperrors.ErrInvalidToken
+	}
+
+	if !token.Valid {
+		slog.Debug("Token is invalid",
+			slog.String("op", op),
+		)
+		return nil, apperrors.ErrInvalidToken
+	}
+
+	if time.Until(claims.ExpiresAt.Time) < 0 {
+		slog.Debug("Token expired",
+			slog.String("op", op),
+			slog.String("user_id", claims.ID),
+			slog.Time("expires_at", claims.ExpiresAt.Time),
+		)
+		return nil, apperrors.ErrTokenExpired
+	}
+
+	return &claims, nil
 }

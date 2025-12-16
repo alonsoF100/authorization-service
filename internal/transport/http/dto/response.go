@@ -45,3 +45,17 @@ func NewSignInResponse(token string) SignInResponse {
 		Type: "Bearer",
 	}
 }
+
+type GetMeResponse struct {
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	Nickname string `json:"nickname"`
+}
+
+func NewGetMeResponse(claims *models.Claims) GetMeResponse {
+	return GetMeResponse{
+		ID:       claims.ID,
+		Email:    claims.Email,
+		Nickname: claims.Nickname,
+	}
+}
