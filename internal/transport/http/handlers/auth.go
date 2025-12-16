@@ -11,7 +11,7 @@ import (
 )
 
 /*
-pattern: /auth/users
+pattern: /auth/register
 method: POST
 info: JSON in request body
 
@@ -22,12 +22,13 @@ succeed:
 
 failed:
 
-	-status code: 400 bad request, 409 conflict, 500 internal srv error
-	-response body: JSON with err + time
+	-status code: 400 bad request, 409 conflict, 500 internal server error
+	-response body: JSON with error message + timestamp
 */
-func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
-	const pp = "internal/transport/http/handlers/user.go/CreateUser"
-	var req dto.CreateUserRequest
+func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
+	const pp = "internal/transport/http/handlers/auth.go/SignUp"
+	
+	var req dto.SignUpRequest
 	ctx := r.Context()
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(ErrFailedToDecode))
@@ -83,5 +84,24 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJSON(w, http.StatusCreated, dto.NewCreateUserResponse(user))
+	WriteJSON(w, http.StatusCreated, dto.NewSignUpResponse(user))
+}
+
+/*
+pattern: /auth/login
+method: POST
+info: JSON in request body
+
+succeed:
+
+	-status code: 200 ok
+	-response body: JSON represented JWT token
+
+failed:
+
+	-status code: 400 bad request, 401 unauthorized, 500 internal server error
+	-response body: JSON with error message + timestamp
+*/
+func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
+	const pp = "internal/transport/http/handlers/user.go/SignIn"
 }

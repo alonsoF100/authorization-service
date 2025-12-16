@@ -18,15 +18,15 @@ func NewErrorResponse(err error) ErrorResponse {
 	}
 }
 
-type CreateUserResponse struct {
+type SignUpResponse struct {
 	Nickname  string    `json:"nickname"`
 	Email     string    `json:"email"`
 	UserID    string    `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func NewCreateUserResponse(user *models.User) CreateUserResponse {
-	return CreateUserResponse{
+func NewSignUpResponse(user *models.User) SignUpResponse {
+	return SignUpResponse{
 		Nickname:  user.Nickname,
 		Email:     user.Email,
 		UserID:    user.ID,
