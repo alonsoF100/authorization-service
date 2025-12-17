@@ -10,7 +10,6 @@ import (
 	"github.com/alonsoF100/authorization-service/internal/apperrors"
 	"github.com/alonsoF100/authorization-service/internal/config"
 	"github.com/alonsoF100/authorization-service/internal/models"
-	"github.com/alonsoF100/authorization-service/internal/repository/postgres"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -27,7 +26,7 @@ type AuthService struct {
 	cfg            *config.Config
 }
 
-func NewAuthService(repository *postgres.Repository, cfg *config.Config) *AuthService {
+func NewAuthService(repository AuthRepository, cfg *config.Config) *AuthService {
 	return &AuthService{
 		authRepository: repository,
 		cfg:            cfg,
