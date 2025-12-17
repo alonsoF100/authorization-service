@@ -10,7 +10,6 @@ import (
 	"github.com/alonsoF100/authorization-service/internal/models"
 )
 
-//go:generate mockery --name=UserRepository --output=mocks --outpkg=mocks
 type UserRepository interface {
 	FindByID(ctx context.Context, userID string) (*models.User, error)
 	DeleteUser(ctx context.Context, userID string) error
