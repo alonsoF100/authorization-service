@@ -14,7 +14,7 @@ type AuthService interface {
 }
 
 type UserService interface {
-	// TODO add userService methods signature
+	GetUser(ctx context.Context, userID string) (*models.User, error)
 }
 
 type Handler struct {

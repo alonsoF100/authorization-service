@@ -52,10 +52,10 @@ type GetMeResponse struct {
 	Nickname string `json:"nickname"`
 }
 
-func NewGetMeResponse(claims *models.Claims) GetMeResponse {
+func NewGetMeResponse(user *models.User) GetMeResponse {
 	return GetMeResponse{
-		ID:       claims.ID,
-		Email:    claims.Email,
-		Nickname: claims.Nickname,
+		ID:       user.ID,
+		Email:    user.Email,
+		Nickname: user.Nickname,
 	}
 }

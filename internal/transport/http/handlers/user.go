@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -22,7 +23,7 @@ succeed:
 
 failed:
 
-	-status code: 401 unauthorized, 500 internal server error
+	-status code: 401 unauthorized, 404 not found, 500 internal server error
 	-response body: JSON with error message + timestamp
 */
 func (h Handler) GetMe(w http.ResponseWriter, r *http.Request) {
@@ -35,15 +36,28 @@ func (h Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 		help.WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrUnauthorized))
 		return
 	}
+	ctx := r.Context()
 
-	// TODO get valid data from database
+	user, err := h.UserService.GetUser(ctx, claims.ID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrUserNotFoundByID) {
+			help.WriteJSON(w, http.StatusUnauthorized, dto.NewErrorResponse(apperrors.ErrInvalidCredentials))
+			slog.Debug("Authentication failed",
+				slog.String("op", op),
+				slog.String("user_id", claims.ID),
+				slog.String("error", err.Error()),
+			)
+			return
+		}
 
-	slog.Info("User info requested",
-		slog.String("op", op),
-		slog.String("user_id", claims.ID),
-		slog.String("email", claims.Email),
-		slog.String("nickname", claims.Nickname),
-	)
+		help.WriteJSON(w, http.StatusInternalServerError, dto.NewErrorResponse(apperrors.ErrServer))
+		slog.Debug("Intenal server error",
+			slog.String("op", op),
+			slog.String("user_id", claims.ID),
+			slog.String("error", err.Error()),
+		)
+		return
+	}
 
-	help.WriteJSON(w, http.StatusOK, dto.NewGetMeResponse(claims))
+	help.WriteJSON(w, http.StatusOK, dto.NewGetMeResponse(user))
 }

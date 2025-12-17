@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 
 	"github.com/alonsoF100/authorization-service/internal/config"
@@ -15,7 +14,6 @@ import (
 
 func main() {
 	cfg := config.Load()
-	log.Println(cfg)
 
 	logger.Setup(cfg)
 
@@ -32,11 +30,11 @@ func main() {
 		dataBase,
 		cfg,
 	)
+	userService := service.NewUserService(dataBase)
 
-	//userService = // TODO add userService setup for handlers/user.go :)
 	handlers := handlers.New(
 		authService,
-		nil,
+		userService,
 	)
 
 	if err := server.New(cfg, handlers).Start(); err != nil {
