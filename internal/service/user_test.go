@@ -73,3 +73,55 @@ func TestGetUserNotFound(t *testing.T) {
 	require.Equal(t, someErr, err)
 	require.Nil(t, user)
 }
+
+func TestDeleteUserSuccess(t *testing.T) {
+	mc := minimock.NewController(t)
+	mockRepo := service.NewUserRepositoryMock(mc)
+
+	ctx := context.Background()
+	userID := uuid.New().String()
+
+	mockRepo.DeleteUserMock.Expect(ctx, userID).Return(nil)
+
+	userService := service.NewUserService(mockRepo)
+
+	err := userService.DeleteUser(ctx, userID)
+
+	require.NoError(t, err)
+}
+
+func TestDeleteUserDatabaseError(t *testing.T) {
+	mc := minimock.NewController(t)
+	mockRepo := service.NewUserRepositoryMock(mc)
+
+	ctx := context.Background()
+	userID := uuid.New().String()
+	someErr := errors.New("database error")
+
+	mockRepo.DeleteUserMock.Expect(ctx, userID).Return(someErr)
+
+	userService := service.NewUserService(mockRepo)
+
+	err := userService.DeleteUser(ctx, userID)
+
+	require.Error(t, err)
+	require.True(t, errors.Is(err, someErr))
+}
+
+func TestDeleteUserNotFound(t *testing.T) {
+	mc := minimock.NewController(t)
+	mockRepo := service.NewUserRepositoryMock(mc)
+
+	ctx := context.Background()
+	userID := uuid.New().String()
+	someErr := apperrors.ErrUserNotFoundByID
+
+	mockRepo.DeleteUserMock.Expect(ctx, userID).Return(someErr)
+
+	userService := service.NewUserService(mockRepo)
+
+	err := userService.DeleteUser(ctx, userID)
+
+	require.Error(t, err)
+	require.Equal(t, someErr, err)
+}
