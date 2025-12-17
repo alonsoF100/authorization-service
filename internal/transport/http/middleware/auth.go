@@ -28,9 +28,12 @@ const UserContextKey contextKey = "user"
 func Auth(tokenValidator TokenValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			const op = "middleware/auth.go/Auth"
+
 			token := extractToken(r)
 			if token == "" {
 				slog.Info("Authentication failed: missing authorization header",
+					slog.String("op", op),
 					slog.String("path", r.URL.Path),
 					slog.String("method", r.Method),
 				)
@@ -41,6 +44,7 @@ func Auth(tokenValidator TokenValidator) func(http.Handler) http.Handler {
 			claims, err := tokenValidator.ValidateJWT(r.Context(), token)
 			if err != nil {
 				slog.Info("Authentication failed: invalid token",
+					slog.String("op", op),
 					slog.String("path", r.URL.Path),
 					slog.String("method", r.Method),
 					slog.String("error", err.Error()),
