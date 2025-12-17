@@ -63,7 +63,7 @@ func (h Handler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-pattern: /api/delete
+pattern: /api/me
 method: DELETE
 info: barer token from header
 

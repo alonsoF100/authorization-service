@@ -30,6 +30,7 @@ func (rt Router) Setup() *chi.Mux {
 		r.Use(middleware.Auth(rt.handlers.AuthService))
 
 		r.Get("/me", rt.handlers.GetMe)
+		r.Delete("/me", rt.handlers.DeleteMe)
 	})
 
 	return r
