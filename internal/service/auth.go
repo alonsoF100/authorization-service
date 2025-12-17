@@ -88,7 +88,7 @@ func (s AuthService) SignUp(ctx context.Context, nickname, email, password strin
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	slog.Info("Registration successful",
+	slog.Info("Registration successfull",
 		slog.String("op", op),
 		slog.String("user_id", user.ID),
 		slog.String("email", email),
@@ -144,7 +144,7 @@ func (s AuthService) SignIn(ctx context.Context, email, password string) (string
 		return "", err
 	}
 
-	slog.Info("Authentication successful",
+	slog.Info("Authentication successfull",
 		slog.String("op", op),
 		slog.String("user_id", user.ID),
 		slog.String("email", email),

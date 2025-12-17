@@ -15,6 +15,7 @@ type AuthService interface {
 
 type UserService interface {
 	GetUser(ctx context.Context, userID string) (*models.User, error)
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 type Handler struct {

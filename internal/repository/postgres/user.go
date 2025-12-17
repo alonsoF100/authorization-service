@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/alonsoF100/authorization-service/internal/apperrors"
 	"github.com/alonsoF100/authorization-service/internal/models"
 	"github.com/jackc/pgx/v5"
 )
@@ -51,7 +52,7 @@ func (r Repository) FindByID(ctx context.Context, userID string) (*models.User, 
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
-	slog.Debug("User was succsessfully founded",
+	slog.Debug("User was successfully founded",
 		slog.String("op", op),
 		slog.String("nickname", user.Nickname),
 		slog.String("email", user.Email),
@@ -59,4 +60,49 @@ func (r Repository) FindByID(ctx context.Context, userID string) (*models.User, 
 	)
 
 	return &user, nil
+}
+
+func (r Repository) DeleteUser(ctx context.Context, userID string) error {
+	const op = "repository/postgres/user.go/DeleteUser"
+
+	const query = `
+	DELETE FROM users 
+	WHERE id = $1
+	`
+
+	slog.Debug("Query data",
+		slog.String("op", op),
+		slog.String("query_row", query),
+		slog.String("id", userID),
+	)
+
+	row, err := r.pool.Exec(
+		ctx,
+		query,
+		userID,
+	)
+	if err != nil {
+		slog.Error("Database error",
+			slog.String("op", op),
+			slog.String("user_id", userID),
+			slog.String("error", err.Error()),
+		)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	if row.RowsAffected() == 0 {
+		slog.Debug("User not found by id",
+			slog.String("op", op),
+			slog.String("user_id", userID),
+		)
+		return apperrors.ErrUserNotFoundByID
+	}
+
+	slog.Debug("User was successfully deleted",
+		slog.String("op", op),
+		slog.String("id", userID),
+		slog.Int64("rows_affected", row.RowsAffected()),
+	)
+
+	return nil
 }

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -12,6 +13,7 @@ import (
 
 type UserRepository interface {
 	FindByID(ctx context.Context, userID string) (*models.User, error)
+	DeleteUser(ctx context.Context, userID string) error
 }
 
 type UserService struct {
@@ -43,14 +45,14 @@ func (s UserService) GetUser(ctx context.Context, userID string) (*models.User, 
 	}
 
 	if user == nil {
-		slog.Info("Authentication failed: email not registered",
+		slog.Info("Invalidation failed: user not founded",
 			slog.String("op", op),
 			slog.String("user_id", userID),
 		)
 		return nil, apperrors.ErrUserNotFoundByID
 	}
 
-	slog.Info("User founded successfuly",
+	slog.Info("User founded successfully",
 		slog.String("op", op),
 		slog.String("user_id", user.ID),
 		slog.String("email", user.Email),
@@ -58,4 +60,38 @@ func (s UserService) GetUser(ctx context.Context, userID string) (*models.User, 
 	)
 
 	return user, nil
+}
+
+func (s UserService) DeleteUser(ctx context.Context, userID string) error {
+	const op = "service/user.go/DeleteUser"
+
+	slog.Debug("Start user delete process",
+		slog.String("op", op),
+		slog.String("user_id", userID),
+	)
+
+	err := s.userRepository.DeleteUser(ctx, userID)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrUserNotFoundByID) {
+			slog.Info("Delete process failed: user not founded",
+				slog.String("op", op),
+				slog.String("user_id", userID),
+			)
+			return apperrors.ErrUserNotFoundByID
+		}
+
+		slog.Error("Database error during delete process",
+			slog.String("op", op),
+			slog.String("user_id", userID),
+			slog.String("error", err.Error()),
+		)
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	slog.Info("User deleted successfully",
+		slog.String("op", op),
+		slog.String("user_id", userID),
+	)
+
+	return nil
 }
