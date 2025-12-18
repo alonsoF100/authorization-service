@@ -12,9 +12,9 @@ func Setup(cfg *config.Config) *slog.Logger {
 
 	switch cfg.Logger.JSON {
 	case true:
-		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: parseLevel(cfg.Logger.Level)})
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: ParseLevel(cfg.Logger.Level)})
 	default:
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: parseLevel(cfg.Logger.Level)})
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: ParseLevel(cfg.Logger.Level)})
 	}
 
 	logger := slog.New(handler)
@@ -23,7 +23,7 @@ func Setup(cfg *config.Config) *slog.Logger {
 	return logger
 }
 
-func parseLevel(level string) slog.Level {
+func ParseLevel(level string) slog.Level {
 	switch level {
 	case "debug":
 		return slog.LevelDebug
