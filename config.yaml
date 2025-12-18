@@ -6,7 +6,7 @@ server:
 
 database:
   host: postgres # postgres - Docker, localhost - local
-  port: 5432
+  port: "5432"
   user: postgres
   password: ""
   name: auth
