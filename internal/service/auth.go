@@ -186,7 +186,7 @@ func (s AuthService) ValidateJWT(ctx context.Context, tokenString string) (*mode
 	const op = "service/auth.go/ValidateToken"
 
 	var claims models.Claims
-	token, err := jwt.ParseWithClaims(tokenString, &claims, func(t *jwt.Token) (any, error) {
+	_, err := jwt.ParseWithClaims(tokenString, &claims, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			slog.Debug("Invalid signing method",
 				slog.String("op", op),
@@ -202,22 +202,6 @@ func (s AuthService) ValidateJWT(ctx context.Context, tokenString string) (*mode
 			slog.String("error", err.Error()),
 		)
 		return nil, apperrors.ErrInvalidToken
-	}
-
-	if !token.Valid {
-		slog.Debug("Token is invalid",
-			slog.String("op", op),
-		)
-		return nil, apperrors.ErrInvalidToken
-	}
-
-	if time.Until(claims.ExpiresAt.Time) < 0 {
-		slog.Debug("Token expired",
-			slog.String("op", op),
-			slog.String("user_id", claims.ID),
-			slog.Time("expires_at", claims.ExpiresAt.Time),
-		)
-		return nil, apperrors.ErrTokenExpired
 	}
 
 	return &claims, nil

@@ -8,7 +8,6 @@ var (
 	ErrUserNotFoundByID   = errors.New("failed to find user by id")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrInvalidToken       = errors.New("invalid token")
-	ErrTokenExpired       = errors.New("token expired")
 	ErrUnauthorized       = errors.New("user authorized")
 	ErrFailedToDecode     = errors.New("failed to decode JSON")
 	ErrFailedToValidate   = errors.New("failed to validate request")
