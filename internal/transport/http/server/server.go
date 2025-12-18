@@ -3,7 +3,6 @@ package server
 import (
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/alonsoF100/authorization-service/internal/config"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/handlers"
@@ -12,9 +11,9 @@ import (
 )
 
 type Server struct {
-	server *http.Server
-	router *chi.Mux
-	cfg    *config.Config
+	Server *http.Server
+	Router *chi.Mux
+	Cfg    *config.Config
 }
 
 func New(cfg *config.Config, handlers *handlers.Handler) *Server {
@@ -23,25 +22,25 @@ func New(cfg *config.Config, handlers *handlers.Handler) *Server {
 	srv := &http.Server{
 		Addr:         cfg.Server.PortStr(),
 		Handler:      rtr,
-		ReadTimeout:  cfg.Server.ReadTimeout * time.Second,
-		WriteTimeout: cfg.Server.WriteTimeout * time.Second,
-		IdleTimeout:  cfg.Server.IdleTimeout * time.Second,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
+		IdleTimeout:  cfg.Server.IdleTimeout,
 	}
 
 	return &Server{
-		server: srv,
-		router: rtr,
-		cfg:    cfg,
+		Server: srv,
+		Router: rtr,
+		Cfg:    cfg,
 	}
 }
 
 func (s *Server) Start() error {
 	slog.Info("Starting HTTP server",
-		"address", s.cfg.Server.PortStr(),
-		"read_timeout", s.cfg.Server.ReadTimeout,
-		"write_timeout", s.cfg.Server.WriteTimeout,
-		"idle_timeout", s.cfg.Server.IdleTimeout,
+		"address", s.Cfg.Server.PortStr(),
+		"read_timeout", s.Cfg.Server.ReadTimeout,
+		"write_timeout", s.Cfg.Server.WriteTimeout,
+		"idle_timeout", s.Cfg.Server.IdleTimeout,
 	)
 
-	return s.server.ListenAndServe()
+	return s.Server.ListenAndServe()
 }
