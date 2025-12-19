@@ -30,7 +30,7 @@ func Auth(tokenValidator TokenValidator) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			const op = "middleware/auth.go/Auth"
 
-			token := extractToken(r)
+			token := ExtractToken(r)
 			if token == "" {
 				slog.Info("Authentication failed: missing authorization header",
 					slog.String("op", op),
@@ -59,7 +59,7 @@ func Auth(tokenValidator TokenValidator) func(http.Handler) http.Handler {
 	}
 }
 
-func extractToken(r *http.Request) string {
+func ExtractToken(r *http.Request) string {
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
 		return ""
