@@ -21,13 +21,13 @@ type UserService interface {
 type Handler struct {
 	AuthService AuthService
 	UserService UserService
-	validator   *validator.Validate
+	Validator   *validator.Validate
 }
 
 func New(authService AuthService, userService UserService) *Handler {
 	return &Handler{
 		AuthService: authService,
 		UserService: userService,
-		validator:   validator.New(),
+		Validator:   validator.New(),
 	}
 }

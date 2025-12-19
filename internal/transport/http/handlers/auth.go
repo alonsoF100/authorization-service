@@ -40,7 +40,7 @@ func (h Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.validator.Struct(req); err != nil {
+	if err := h.Validator.Struct(req); err != nil {
 		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
 			slog.String("op", op),
@@ -119,7 +119,7 @@ func (h Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.validator.Struct(req); err != nil {
+	if err := h.Validator.Struct(req); err != nil {
 		help.WriteJSON(w, http.StatusBadRequest, dto.NewErrorResponse(apperrors.ErrFailedToValidate))
 		slog.Warn("Failed to validate request",
 			slog.String("op", op),
