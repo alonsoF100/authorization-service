@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/alonsoF100/authorization-service/internal/config"
+	"github.com/alonsoF100/authorization-service/internal/logger"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/handlers"
 	"github.com/alonsoF100/authorization-service/internal/transport/http/server"
 	"github.com/stretchr/testify/assert"
@@ -19,11 +20,16 @@ func TestNew(t *testing.T) {
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  60 * time.Second,
 		},
+		Logger: config.LoggerConfig{
+			Level: "debug",
+			JSON:  false,
+		},
 	}
 
 	mockHandler := &handlers.Handler{}
 
-	srv := server.New(cfg, mockHandler)
+	logger := logger.Setup(cfg)
+	srv := server.New(cfg, mockHandler, logger)
 
 	require.NotNil(t, srv)
 	assert.NotNil(t, srv.Server)

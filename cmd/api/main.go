@@ -15,7 +15,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	logger.Setup(cfg)
+	logS := logger.Setup(cfg)
 
 	pool, err := postgres.NewPool(cfg)
 	if err != nil {
@@ -37,7 +37,7 @@ func main() {
 		userService,
 	)
 
-	if err := server.New(cfg, handlers).Start(); err != nil {
+	if err := server.New(cfg, handlers, logS).Start(); err != nil {
 		slog.Error("Failed to start server",
 			"error", err)
 	}

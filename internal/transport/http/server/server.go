@@ -14,10 +14,13 @@ type Server struct {
 	Server *http.Server
 	Router *chi.Mux
 	Cfg    *config.Config
+	Logger *slog.Logger
 }
 
-func New(cfg *config.Config, handlers *handlers.Handler) *Server {
+func New(cfg *config.Config, handlers *handlers.Handler, logger *slog.Logger) *Server {
 	rtr := router.New(handlers).Setup()
+
+	stdLogger := slog.NewLogLogger(logger.Handler(), slog.LevelError)
 
 	srv := &http.Server{
 		Addr:         cfg.Server.PortStr(),
@@ -25,12 +28,14 @@ func New(cfg *config.Config, handlers *handlers.Handler) *Server {
 		ReadTimeout:  cfg.Server.ReadTimeout,
 		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  cfg.Server.IdleTimeout,
+		ErrorLog:     stdLogger,
 	}
 
 	return &Server{
 		Server: srv,
 		Router: rtr,
 		Cfg:    cfg,
+		Logger: logger,
 	}
 }
 
